@@ -714,7 +714,7 @@ def upload_single_file(s3_client, bucket_name, filepath, filename):
         print(f"  ❌ Failed to upload {filename}: {e}")
 
 
-def upload_to_b2_parallel(folder_path, bucket_name="baroclinic-weather-data"):
+def upload_to_b2_parallel(folder_path, bucket_name="baroclinic-aifs-data"):
     endpoint = os.environ.get("B2_ENDPOINT")
     key_id = os.environ.get("B2_KEY_ID")
     app_key = os.environ.get("B2_APPLICATION_KEY")
@@ -755,7 +755,7 @@ def upload_to_b2_parallel(folder_path, bucket_name="baroclinic-weather-data"):
         concurrent.futures.wait(futures)
 
 
-def upload_to_huggingface(folder_path, repo_id="PhillyWeatherGuy/baroclinic-model-data"):
+def upload_to_huggingface(folder_path, repo_id="PhillyWeatherGuy/baroclinic-aifs-data"):
     hf_token = os.environ.get("HF_TOKEN")
     if not hf_token:
         print("⚠️ HF_TOKEN not set in environment. Skipping Hugging Face upload.")
@@ -776,7 +776,7 @@ def upload_to_huggingface(folder_path, repo_id="PhillyWeatherGuy/baroclinic-mode
         print(f"  ❌ Failed to upload to Hugging Face: {e}")
 
 
-def prune_old_huggingface_runs(repo_id="PhillyWeatherGuy/baroclinic-model-data", days_to_keep=3):
+def prune_old_huggingface_runs(repo_id="PhillyWeatherGuy/baroclinic-aifs-data", days_to_keep=7):
     hf_token = os.environ.get("HF_TOKEN")
     if not hf_token:
         return
