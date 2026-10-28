@@ -923,6 +923,11 @@ def run_master_pipeline(selected_param_key="2t"):
                 prev_arr = results[prev_s] if prev_s is not None else 0.0
 
             diff = np.maximum(0.0, results[s] - prev_arr)
+
+            # 🌟 2x2 erosion filter to eliminate speckles (PolarWx logic)
+            if diff.max() > 0:
+                diff = cv2.erode(diff, np.ones((2, 2), np.uint8))
+
             diff_results[s] = normalize_array(diff, param_config)
         results = diff_results
 
