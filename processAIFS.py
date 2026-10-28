@@ -559,10 +559,10 @@ def fetch_and_process_step(client, target_date, chosen_run, step, param_config, 
                             warm_nose = max_col_t.values > 273.15
                             
                             # Warm nose above freezing but surface freezing -> Mix
-                            ptype_arr[surf_freeze & warm_nose] = 2
+                            ptype_arr[surf_freeze & warm_nose] = 3
                             
                             # Below freezing all the way up -> Snow
-                            ptype_arr[surf_freeze & ~warm_nose] = 3
+                            ptype_arr[surf_freeze & ~warm_nose] = 5
                             
                             # 🌟 FIX: Mask out ptype where there is no precipitation
                             if frame_arr is not None:
