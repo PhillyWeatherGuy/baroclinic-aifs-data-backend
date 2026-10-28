@@ -489,7 +489,8 @@ def fetch_and_process_step(client, target_date, chosen_run, step, param_config, 
         "type": param_config.get("type", "fc"),
         "levtype": param_config.get("levtype", "sfc"),
         "param": grib_p if isinstance(grib_p, list) else [grib_p],
-        "target": grib_file
+        "target": grib_file,
+        "stream": "oper"  # 🌟 Added stream here
     }
 
     if "levelist" in param_config:
@@ -522,9 +523,9 @@ def fetch_and_process_step(client, target_date, chosen_run, step, param_config, 
                     try:
                         with tm("download_ptype"):
                             # Fetch 2t (Surface)
-                            client.retrieve(date=target_date, time=int(chosen_run), step=step, type="fc", levtype="sfc", param=["2t"], target=t2m_file)
+                            client.retrieve(date=target_date, time=int(chosen_run), step=step, stream="oper", type="fc", levtype="sfc", param=["2t"], target=t2m_file)
                             # Fetch t (Pressure Levels)
-                            client.retrieve(date=target_date, time=int(chosen_run), step=step, type="fc", levtype="pl", levelist=[1000, 925, 850, 700, 500], param=["t"], target=t_pl_file)
+                            client.retrieve(date=target_date, time=int(chosen_run), step=step, stream="oper", type="fc", levtype="pl", levelist=[1000, 925, 850, 700, 500], param=["t"], target=t_pl_file)
                         
                         if os.path.exists(t2m_file) and os.path.exists(t_pl_file):
                             # Load 2m Temp
@@ -868,8 +869,8 @@ def run_master_pipeline(selected_param_key="2t"):
         try: os.remove(f)
         except Exception: pass
 
-    # 🌟 AIFS Client setup
-    client = Client(source="azure", model="aifs-single", resol="0p25", stream="oper")
+    # 🌟 AIFS Client setup (removed stream from here)
+    client = Client(source="azure", model="aifs-single", resol="0p25")
     os.makedirs(output_dist_dir, exist_ok=True)
 
     t0 = time.perf_counter()
@@ -1106,5 +1107,5 @@ if __name__ == "__main__":
 
     print("\n🎉 ALL PARAMETERS COMPLETED SUCCESSFULLY!")
     t_p = time.perf_counter()
-    prune_old_huggingface_runs(days_to_keep=3)
+    prune_old_huggingface_runs(days_to_keep=7)
     print(f"⏱️ prune {time.perf_counter() - t_p:.1f}s | pipeline total {time.perf_counter() - t_run:.1f}s", flush=True)
