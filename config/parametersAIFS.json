@@ -176,18 +176,20 @@
     "prate": {
       "id": "prate",
       "name": "Surface Precipitation Rate",
-      "grib_param": "tprate",
+      "grib_param": "tp",
+      "interval_hours": 6,
       "levtype": "sfc",
       "type": "fc",
       "unit": "in/hr",
       "ptype_source": {
-        "grib_param": "ptype",
-        "levtype": "sfc",
+        "grib_param": ["2t", "t"],
+        "levtype": ["sfc", "pl"],
+        "levelist": [1000, 925, 850, 700, 500],
         "type": "fc"
       },
       "scaling": {
         "mode": "piecewise",
-        "unit_multiplier": 141.7322834646,
+        "unit_multiplier": 6.5616833,
         "val_points": [0.0, 0.1, 1.0, 2.5],
         "byte_points": [0, 100, 200, 255]
       },
