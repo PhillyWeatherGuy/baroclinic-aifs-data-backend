@@ -524,8 +524,8 @@ def fetch_and_process_step(client, target_date, chosen_run, step, param_config, 
                         with tm("download_ptype"):
                             # Fetch 2t (Surface)
                             client.retrieve(date=target_date, time=int(chosen_run), step=step, stream="oper", type="fc", levtype="sfc", param=["2t"], target=t2m_file)
-                            # Fetch t (Pressure Levels)
-                            client.retrieve(date=target_date, time=int(chosen_run), step=step, stream="oper", type="fc", levtype="pl", levelist=[1000, 925, 850, 700, 500], param=["t"], target=t_pl_file)
+                            # 🌟 FIX: Fetch only 850, 700, 500 mb to avoid underground extrapolation over high terrain
+                            client.retrieve(date=target_date, time=int(chosen_run), step=step, stream="oper", type="fc", levtype="pl", levelist=[850, 700, 500], param=["t"], target=t_pl_file)
                         
                         if os.path.exists(t2m_file) and os.path.exists(t_pl_file):
                             # Load 2m Temp
@@ -541,11 +541,12 @@ def fetch_and_process_step(client, target_date, chosen_run, step, param_config, 
                             # Find the level dimension in t_pl_da safely
                             level_dim = next((dim for dim in t_pl_da.dims if 'isobaric' in dim.lower() or 'level' in dim.lower()), None)
                             if level_dim:
+                                # 🌟 FIX: Filter out unrealistic missing values before max
+                                t_pl_da = t_pl_da.where((t_pl_da > 100) & (t_pl_da < 350))
                                 max_col_t = t_pl_da.max(dim=level_dim)
                             else:
                                 max_col_t = t_pl_da.max(dim=t_pl_da.dims[0])
                                 
-                            # Now max_col_t has the exact same dims as t2m_da
                             # Logic: 1=Rain, 2=Mix, 3=Snow
                             ptype_arr = np.zeros_like(t2m_da.values, dtype=np.uint8)
                             
@@ -562,6 +563,10 @@ def fetch_and_process_step(client, target_date, chosen_run, step, param_config, 
                             
                             # Below freezing all the way up -> Snow
                             ptype_arr[surf_freeze & ~warm_nose] = 3
+                            
+                            # 🌟 FIX: Mask out ptype where there is no precipitation
+                            if frame_arr is not None:
+                                ptype_arr[frame_arr == 0] = 0
                             
                             ds_2t.close()
                             ds_t.close()
