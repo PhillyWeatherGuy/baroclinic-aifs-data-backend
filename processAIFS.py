@@ -490,7 +490,7 @@ def fetch_and_process_step(client, target_date, chosen_run, step, param_config, 
         "levtype": param_config.get("levtype", "sfc"),
         "param": grib_p if isinstance(grib_p, list) else [grib_p],
         "target": grib_file,
-        "stream": "oper"  # 🌟 Added stream here
+        "stream": "oper"
     }
 
     if "levelist" in param_config:
@@ -531,37 +531,40 @@ def fetch_and_process_step(client, target_date, chosen_run, step, param_config, 
                             # Load 2m Temp
                             ds_2t = xr.open_dataset(t2m_file, engine="cfgrib", backend_kwargs={'errors': 'ignore'})
                             t2m_var = next(iter(ds_2t.data_vars))
-                            t2m = np.squeeze(ds_2t[t2m_var].values)
-                            ds_2t.close()
+                            t2m_da = ds_2t[t2m_var].squeeze()
                             
                             # Load Pressure Level Temps
                             ds_t = xr.open_dataset(t_pl_file, engine="cfgrib", backend_kwargs={'errors': 'ignore'})
                             t_var = next(iter(ds_t.data_vars))
-                            t_pl = ds_t[t_var].values
-                            # Ensure level is first axis (level, lat, lon)
-                            if t_pl.ndim == 3 and t_pl.shape[0] > 5:
-                                pass
-                            else:
-                                t_pl = np.moveaxis(t_pl, -1, 0)
-                            ds_t.close()
+                            t_pl_da = ds_t[t_var].squeeze()
                             
+                            # Find the level dimension in t_pl_da safely
+                            level_dim = next((dim for dim in t_pl_da.dims if 'isobaric' in dim.lower() or 'level' in dim.lower()), None)
+                            if level_dim:
+                                max_col_t = t_pl_da.max(dim=level_dim)
+                            else:
+                                max_col_t = t_pl_da.max(dim=t_pl_da.dims[0])
+                                
+                            # Now max_col_t has the exact same dims as t2m_da
                             # Logic: 1=Rain, 2=Mix, 3=Snow
-                            ptype_arr = np.zeros_like(t2m, dtype=np.uint8)
+                            ptype_arr = np.zeros_like(t2m_da.values, dtype=np.uint8)
                             
                             # Surface > 273.15K -> Rain
-                            rain_mask = t2m > 273.15
+                            rain_mask = t2m_da.values > 273.15
                             ptype_arr[rain_mask] = 1
                             
                             # Surface <= 273.15K
                             surf_freeze = ~rain_mask
-                            max_col_t = np.max(t_pl, axis=0)
-                            warm_nose = max_col_t > 273.15
+                            warm_nose = max_col_t.values > 273.15
                             
                             # Warm nose above freezing but surface freezing -> Mix
                             ptype_arr[surf_freeze & warm_nose] = 2
                             
                             # Below freezing all the way up -> Snow
                             ptype_arr[surf_freeze & ~warm_nose] = 3
+                            
+                            ds_2t.close()
+                            ds_t.close()
                     except Exception as e:
                         print(f"  ⚠️ [{param_config['id']}] AIFS Ptype derivation failed F{step:03d}: {e}")
                     finally:
@@ -869,7 +872,7 @@ def run_master_pipeline(selected_param_key="2t"):
         try: os.remove(f)
         except Exception: pass
 
-    # 🌟 AIFS Client setup (removed stream from here)
+    # 🌟 AIFS Client setup
     client = Client(source="azure", model="aifs-single", resol="0p25")
     os.makedirs(output_dist_dir, exist_ok=True)
 
