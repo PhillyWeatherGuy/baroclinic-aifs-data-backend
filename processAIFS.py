@@ -26,6 +26,12 @@ os.environ["GDAL_NUM_THREADS"] = "ALL_CPUS"
 os.environ.setdefault("TQDM_DISABLE", "1")   # silence download progress bars (best effort)
 sys.stdout.reconfigure(line_buffering=True)  # so log timestamps match reality
 
+# 🌟 MANUAL RUN OVERRIDE (Set to None to automatically fetch the latest run)
+# Example: MANUAL_RUN_DATE = "20261028" 
+# Example: MANUAL_RUN_CYCLE = "00"
+MANUAL_RUN_DATE = 20261029
+MANUAL_RUN_CYCLE = 00
+
 # 🌟 AIFS Single v2: 6-hourly to 360h.
 FORECAST_STEPS = list(range(0, 361, 6))
 
@@ -853,21 +859,26 @@ def run_master_pipeline(selected_param_key="2t"):
     t_total = time.perf_counter()
     phases = {}
 
-    now_utc = datetime.datetime.now(datetime.timezone.utc)
-    current_hour = now_utc.hour
-
-    if current_hour >= 20:
-        CHOSEN_RUN, target_date = "12", now_utc.strftime("%Y%m%d")
-    elif current_hour >= 14:
-        CHOSEN_RUN, target_date = "06", now_utc.strftime("%Y%m%d")
-    elif current_hour >= 8:
-        CHOSEN_RUN, target_date = "00", now_utc.strftime("%Y%m%d")
-    elif current_hour >= 2:
-        CHOSEN_RUN = "18"
-        target_date = (now_utc - datetime.timedelta(days=1)).strftime("%Y%m%d")
+    if MANUAL_RUN_DATE and MANUAL_RUN_CYCLE:
+        CHOSEN_RUN = str(MANUAL_RUN_CYCLE).zfill(2)
+        target_date = str(MANUAL_RUN_DATE)
+        print(f"🛠️ Manual Override: Downloading {target_date} @ {CHOSEN_RUN}z")
     else:
-        CHOSEN_RUN = "12"
-        target_date = (now_utc - datetime.timedelta(days=1)).strftime("%Y%m%d")
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        current_hour = now_utc.hour
+
+        if current_hour >= 20:
+            CHOSEN_RUN, target_date = "12", now_utc.strftime("%Y%m%d")
+        elif current_hour >= 14:
+            CHOSEN_RUN, target_date = "06", now_utc.strftime("%Y%m%d")
+        elif current_hour >= 8:
+            CHOSEN_RUN, target_date = "00", now_utc.strftime("%Y%m%d")
+        elif current_hour >= 2:
+            CHOSEN_RUN = "18"
+            target_date = (now_utc - datetime.timedelta(days=1)).strftime("%Y%m%d")
+        else:
+            CHOSEN_RUN = "12"
+            target_date = (now_utc - datetime.timedelta(days=1)).strftime("%Y%m%d")
 
     init_time_iso = f"{target_date[:4]}-{target_date[4:6]}-{target_date[6:]}T{CHOSEN_RUN}:00:00Z"
 
