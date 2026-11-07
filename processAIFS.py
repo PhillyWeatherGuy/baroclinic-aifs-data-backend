@@ -30,7 +30,7 @@ sys.stdout.reconfigure(line_buffering=True)  # so log timestamps match reality
 # Example: MANUAL_RUN_DATE = "20261028" 
 # Example: MANUAL_RUN_CYCLE = "00"
 MANUAL_RUN_DATE = "20261107"
-MANUAL_RUN_CYCLE = "00"
+MANUAL_RUN_CYCLE = "06"
 
 # 🌟 AIFS Single v2: 6-hourly to 360h.
 FORECAST_STEPS = list(range(0, 361, 6))
@@ -556,8 +556,8 @@ def fetch_and_process_step(client, target_date, chosen_run, step, param_config, 
                             # Logic: 1=Rain, 2=Mix, 3=Snow
                             ptype_arr = np.zeros_like(t2m_da.values, dtype=np.uint8)
                             
-                            # Surface > 273.15K -> Rain
-                            rain_mask = t2m_da.values > 273.15
+                            # Surface > 274.817K -> Rain
+                            rain_mask = t2m_da.values > 274.817
                             ptype_arr[rain_mask] = 1
                             
                             # Surface <= 273.15K
