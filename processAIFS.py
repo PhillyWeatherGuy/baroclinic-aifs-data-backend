@@ -29,7 +29,7 @@ sys.stdout.reconfigure(line_buffering=True)  # so log timestamps match reality
 # 🌟 MANUAL RUN OVERRIDE (Set to None to automatically fetch the latest run)
 # Example: MANUAL_RUN_DATE = "20261028" 
 # Example: MANUAL_RUN_CYCLE = "00" 
-MANUAL_RUN_DATE = "20261120"
+MANUAL_RUN_DATE = "20261122"
 MANUAL_RUN_CYCLE = "06"
 
 # 🌟 AIFS Single v2: 6-hourly to 360h.
